@@ -110,11 +110,12 @@ async def analyser(link:str):
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             basic_data = await client.get(f"https://api.github.com/repos/{username}/{repo}")
-            repo_data = await client.get(f"https://api.github.com/repos/{username}/{repo}/git/trees/master?recursive=1")
+            user_json = basic_data.json()
+            repo_data = await client.get(f"https://api.github.com/repos/{username}/{repo}/git/trees/{user_json['default_branch']}?recursive=1")
             lang = await client.get(f"https://api.github.com/repos/{username}/{repo}/languages")
 
 
-            user_json = basic_data.json()
+            
             repo_json = repo_data.json()
             lang_json = lang.json()
             return {
