@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ReadmeForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    /* Core Layout Fix */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: system-ui, sans-serif;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      width: 100%;
+      flex: 1; /* pushes footer to bottom */
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* Input Box */
+    .input-box {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      background: #3b82f6;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* Cards */
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      border: 1px solid #334155;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #38bdf8;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    .score {
+      font-size: 2.5rem;
+      font-weight: bold;
+      text-align: center;
+      color: #38d39f;
+    }
+
+    /* Loading Animation */
+    .spinner {
+      margin: 20px auto;
+      width: 50px;
+      height: 50px;
+      border: 5px solid #1e293b;
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 0.9s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      text-align: center;
+      font-size: 1rem;
+      margin-top: 10px;
+      color: #60a5fa;
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: auto;
+      padding: 20px 10px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      border-top: 1px solid #334155;
+    }
+
+    .footer .contact-links {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .footer .contact-links a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer .contact-links a:hover {
+      text-decoration: underline;
+      color: #3b82f6;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>ReadmeForge</h1>
+    <strong>GitHub Repo ReadME Generator</strong>
+
+    <!-- Input Box -->
+    <div class="input-box">
+      <input id="linkInput" type="text" placeholder="Enter GitHub Repository link...">
+      <button onclick="analyze()">Forge IT</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" style="display:none;">
+      <div class="spinner"></div>
+      <div class="loading-text">Analyzing GitHub Repository...</div>
+    </div>
+
+    <!-- Result Section -->
+    <div id="result"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Made with ❤️ </p>
+    <div class="contact-links">
+      <a href="mailto:alvingeorge_@outlook.com" target="_blank">Email</a>
+      <a href="https://github.com/AlvinGeorge-AG" target="_blank">GitHub</a>
+      <a href="https://linkedin.com/in/alvingeorge550" target="_blank">LinkedIn</a>
+    </div>
+  </footer>
+
+
+  <!-- Markdown Renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+          async function analyze() {
+            const link = document.getElementById("linkInput").value.trim();
+            const loading = document.getElementById("loading");
+            const resultBox = document.getElementById("result");
+
+            if (!link) return alert("Please enter a GitHub link");
+
+            resultBox.innerHTML = "";
+            loading.style.display = "block";
+
+            try {
+              const response = await fetch("http://localhost:8000/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ link })
+              });
+
+              const res = await response.json();
+              loading.style.display = "none";
+
+              if (!res.readme) {
+                resultBox.innerHTML = `<p style='color:red'>Error generating README.</p>`;
+                return;
+              }
+
+              const markdown = res.readme;
+
+              resultBox.innerHTML = `
+                <div class="card">
+                  <div class="section-title">Generated README (Preview)</div>
+                  <div id="markdownPreview" style="padding:10px;"></div>
+                </div>
+
+                <div class="card">
+                  <div class="section-title">Raw Markdown</div>
+                  <textarea id="rawMarkdown" hidden style="display:hidden;width:100%;height:200px;padding:10px;border-radius:10px;">
+        ${markdown}
+                  </textarea>
+                  <button onclick="copyMarkdown()" style="margin-top:10px;">Copy Markdown</button>
+                </div>
+              `;
+
+              // Render Markdown
+              document.getElementById("markdownPreview").innerHTML = marked.parse(markdown);
+            }
+            catch (err) {
+              loading.style.display = "none";
+              alert("Error: " + err);
+            }
+          }
+
+          function copyMarkdown() {
+            const rawText = document.getElementById("rawMarkdown").value;
+            navigator.clipboard.writeText(rawText)
+              .then(() => alert("Markdown copied to clipboard!"))
+              .catch(() => alert("Failed to copy."));
+          }
+</script>
+
+
+</body>
+</html>
